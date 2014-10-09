@@ -1,10 +1,18 @@
 package Backend;
 
+import Exception.NoOtherSolutionException;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
+import java.util.Scanner;
+import javax.swing.JOptionPane;
 
 /*
  * To change this license header, choose License Headers in Project Properties.
@@ -22,6 +30,51 @@ public class Generator {
 
     //List of clauses
     ArrayList<String> clauses;
+
+    public void generateAlternatives() {
+        String resSAT = null;
+        try {
+
+            File file = new File("output.txt");
+            Scanner scan = new Scanner(file);
+            while (scan.hasNext()) {
+                resSAT = scan.nextLine();
+            }
+            String[] resInt = resSAT.split(" ");
+
+            if (resInt[0].equals("UNSAT")) {
+
+            } else {
+                PrintWriter out;
+                out = new PrintWriter(new BufferedWriter(new FileWriter("kotak.cnf", true)));
+                String newLiterals = "";
+
+                for (int i = 0; i < resInt.length - 1; i++) {
+                    newLiterals += (0 - Integer.parseInt(resInt[i])) + " ";
+                }
+                newLiterals += "0";
+                out.println(newLiterals);
+                out.close();
+                String command = "minisat " + "kotak.cnf " + "output.txt";
+                executeCommand(command);
+            }
+
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(null, "You have not generate any solution");
+            
+        }
+
+    }
+
+    public void generateSolutions() throws FileNotFoundException, UnsupportedEncodingException {
+        generateRowExistenceConstraint();
+        generateRowUniqueConstraint();
+        generateColumnUniqueConstraint();
+        generateRightDiagonalConstraint();
+        generateLeftDiagonalConstraint();
+
+        printLiterals();
+    }
 
     public void executeCommand(String command) {
 
@@ -41,7 +94,7 @@ public class Generator {
     }
 
     public void printLiterals() throws FileNotFoundException, UnsupportedEncodingException {
-        PrintWriter writer = new PrintWriter(numOfVariables + "-kotak.cnf", "UTF-8");
+        PrintWriter writer = new PrintWriter("kotak.cnf", "UTF-8");
         String header = "p cnf " + (numOfVariables * numOfVariables) + " " + clauses.size();
         writer.println(header);
         for (int i = 0; i < clauses.size(); i++) {
@@ -49,7 +102,7 @@ public class Generator {
 
         }
         writer.close();
-        String command = "minisat " + numOfVariables + "-kotak.cnf " + numOfVariables + "-output.txt";
+        String command = "minisat " + "kotak.cnf " + "output.txt";
         executeCommand(command);
 
     }
@@ -162,22 +215,21 @@ public class Generator {
         }
     }
 
-    
-    
-    public static void main(String[] args) throws FileNotFoundException, UnsupportedEncodingException {
+    /*
+     public static void main(String[] args) throws FileNotFoundException, UnsupportedEncodingException {
 
-        for (int i = 5; i <= 8; i++) {
-            Generator generator = new Generator(i);
-            long start = System.currentTimeMillis();
-            generator.generateRowExistenceConstraint();
-            generator.generateRowUniqueConstraint();
-            generator.generateColumnUniqueConstraint();
-            generator.generateRightDiagonalConstraint();
-            generator.generateLeftDiagonalConstraint();
-            long end = System.currentTimeMillis();
+     for (int i = 5; i <= 8; i++) {
+     Generator generator = new Generator(i);
+     long start = System.currentTimeMillis();
+     generator.generateRowExistenceConstraint();
+     generator.generateRowUniqueConstraint();
+     generator.generateColumnUniqueConstraint();
+     generator.generateRightDiagonalConstraint();
+     generator.generateLeftDiagonalConstraint();
+     long end = System.currentTimeMillis();
             
-            generator.printLiterals();
-        }
-
-    }
+     generator.printLiterals();
+     }
+     }
+     */
 }
